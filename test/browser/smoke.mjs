@@ -69,6 +69,12 @@ try {
   const attractState = await page.evaluate(() => window.__game.state);
   if (attractState !== 'attract') failures.push(`expected attract state, got ${attractState}`);
 
+  // The mouse pointer must be hidden over the play field (arcade screen).
+  const cursor = await page.evaluate(
+    () => getComputedStyle(document.getElementById('game')).cursor,
+  );
+  if (cursor !== 'none') failures.push(`expected cursor:none on canvas, got ${cursor}`);
+
   // Start a game and let it run.
   await page.keyboard.press('Enter');
   await page.waitForTimeout(500);
