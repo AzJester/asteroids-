@@ -49,6 +49,23 @@ export class Ship {
     return add(this.pos, fromAngle(this.heading, SHIP_RADIUS));
   }
 
+  /** Hull line segments in world space — debris pieces for the death animation. */
+  segments() {
+    const a = this.heading;
+    const cos = Math.cos(a);
+    const sin = Math.sin(a);
+    const toWorld = (p) => ({
+      x: this.pos.x + p.x * cos - p.y * sin,
+      y: this.pos.y + p.x * sin + p.y * cos,
+    });
+    const pts = HULL.map(toWorld);
+    const segs = [];
+    for (let i = 0; i < pts.length; i++) {
+      segs.push([pts[i], pts[(i + 1) % pts.length]]);
+    }
+    return segs;
+  }
+
   integrate() {
     this.vel = clampLength(scale(this.vel, SHIP_DRAG), SHIP_MAX_SPEED);
     this.pos = add(this.pos, this.vel);

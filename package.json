@@ -1,11 +1,15 @@
 {
   "name": "asteroids-1979",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A faithful HTML5 Canvas recreation of Atari's 1979 vector arcade Asteroids.",
   "type": "module",
   "scripts": {
     "start": "python3 -m http.server 8000",
-    "test": "node --test"
+    "test": "node --test test/*.test.js",
+    "test:browser": "node test/browser/smoke.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.0"
   },
   "license": "MIT"
 }

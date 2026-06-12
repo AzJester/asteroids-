@@ -1,6 +1,8 @@
 // Vector-glow drawing helpers. The arcade look is thin luminous lines on black,
 // so everything strokes (never fills) with a soft shadow glow.
 
+import { drawText } from './font.js';
+
 export const PHOSPHOR = '#d7f7ff';
 
 /** Configure the context for glowing vector strokes. */
@@ -31,12 +33,10 @@ export function dot(ctx, x, y, r) {
   ctx.fill();
 }
 
+/** Glowing vector-font text. `y` is the baseline. */
 export function text(ctx, str, x, y, size = 24, align = 'left') {
   ctx.save();
-  glow(ctx, PHOSPHOR, 1, 6);
-  ctx.font = `${size}px "Courier New", monospace`;
-  ctx.textAlign = align;
-  ctx.textBaseline = 'alphabetic';
-  ctx.fillText(str, x, y);
+  glow(ctx, PHOSPHOR, Math.max(1.2, size / 18), 7);
+  drawText(ctx, str, x, y, size, align);
   ctx.restore();
 }
