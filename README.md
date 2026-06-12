@@ -26,12 +26,32 @@ Any static server works (`npx serve`, `php -S localhost:8000`, etc.).
 | Thrust            | ↑  (or W)                 | B, RT, or D-pad up        |
 | Fire              | Space                    | A                         |
 | Hyperspace        | Shift  (or H)             | X                         |
-| Start / Restart   | Enter                    | Start                     |
+| 1-player start    | Enter                    | Start                     |
+| 2-player start    | 2                        | —                         |
+| Settings          | S                        | —                         |
 | Pause             | P                        | —                         |
 | Mute              | M                        | —                         |
 
-On touch devices, on-screen buttons appear automatically and tapping the field
-starts a game.
+Gameplay keys are remappable in **Settings**. On touch devices, on-screen
+buttons appear automatically and tapping the field starts a game.
+
+### Two-player
+
+Press `2` on the title screen for classic alternating play: players swap on each
+death (each keeps their own score, lives, and board state) until both are out.
+
+### Settings (press `S`)
+
+Volume, sound on/off, **CRT filter**, **reduce motion** (disables screen shake
+and phosphor trails), **difficulty** (Easy / Normal / Hard — affects starting
+lives, saucer aggression, and the extra-life threshold), full **key remapping**,
+and reset-local-scores. All persisted to `localStorage`.
+
+### Install / offline (PWA)
+
+The game ships a web manifest + service worker, so it can be **installed to a
+phone or desktop home screen and played offline**. Open the Pages link and use
+your browser's "Install app" / "Add to Home Screen".
 
 ### Extras beyond the cabinet
 
@@ -40,7 +60,11 @@ starts a game.
 - **Phosphor trails** — moving objects leave the brief ghosting of a vector CRT.
 - **Ship break-up death** — the hull splits into drifting, spinning line
   segments, as in the original.
-- **Top-10 leaderboard** with arcade-style 3-initial entry, persisted locally.
+- **Top-10 leaderboard** with arcade-style 3-initial entry. Local by default; an
+  optional **global online board** (cross-device) can be enabled by pointing it
+  at a Supabase project — see [`supabase/README.md`](./supabase/README.md). Until
+  configured, it cleanly uses the local board.
+- **CRT presentation** — scanlines, vignette, and screen shake (all toggleable).
 
 ## What's faithful to the original
 

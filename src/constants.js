@@ -77,6 +77,13 @@ export const PHOSPHOR_FADE = 0.45;       // per-frame fade of the trail buffer
 export const DEMO_ROCKS = 6;             // attract-mode field size
 export const GAMEOVER_TO_ATTRACT_TICKS = 720; // ~12 s, then back to attract demo
 
+// Screen shake: impulse magnitudes (logical px) and per-tick decay.
+export const SHAKE_SHIP_DEATH = 14;
+export const SHAKE_SAUCER = 8;
+export const SHAKE_LARGE_ROCK = 5;
+export const SHAKE_DECAY = 0.86;
+export const PLAYER_BANNER_TICKS = 150;  // "PLAYER N" turn banner duration
+
 // ---- Leaderboard -----------------------------------------------------------
 export const LEADERBOARD_MAX = 10;
 export const ENTRY_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ ';
