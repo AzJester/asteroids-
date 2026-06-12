@@ -103,6 +103,64 @@ try {
   const shot = fileURLToPath(new URL('./artifacts/smoke.png', import.meta.url));
   await page.screenshot({ path: shot });
   console.log(`screenshot: ${shot}`);
+
+  // ---- Mobile / touch scenario --------------------------------------------
+  const mob = await browser.newContext({
+    viewport: { width: 390, height: 844 }, // portrait phone
+    hasTouch: true,
+    isMobile: true,
+    deviceScaleFactor: 2,
+  });
+  const mp = await mob.newPage();
+  mp.on('pageerror', (err) => failures.push(`[mobile] pageerror: ${err.message}`));
+  mp.on('console', (msg) => {
+    if (msg.type() === 'error') failures.push(`[mobile] console.error: ${msg.text()}`);
+  });
+  await mp.goto(url, { waitUntil: 'load' });
+  await mp.waitForTimeout(600);
+
+  // Portrait → the rotate-device hint should be shown.
+  const hintPortrait = await mp.locator('#rotate-hint').isVisible();
+  console.log(`[mobile] rotate hint visible in portrait: ${hintPortrait}`);
+  if (!hintPortrait) failures.push('[mobile] rotate hint not shown in portrait');
+  await mp.locator('#rh-dismiss').tap();
+
+  // Rotate to landscape and dismiss handled → hint gone, controls usable.
+  await mp.setViewportSize({ width: 844, height: 390 });
+  await mp.waitForTimeout(400);
+  const hintLandscape = await mp.locator('#rotate-hint').isVisible();
+  if (hintLandscape) failures.push('[mobile] rotate hint still visible in landscape');
+
+  // Attract-screen touch buttons must be present.
+  for (const id of ['#tb-oneP', '#tb-twoP', '#tb-settingsBtn']) {
+    if (!(await mp.locator(id).isVisible())) failures.push(`[mobile] ${id} not visible on attract`);
+  }
+
+  // Tap "2 PLAYERS" → a 2-player game starts and gameplay buttons appear.
+  await mp.locator('#tb-twoP').tap();
+  await mp.waitForTimeout(400);
+  const mstate = await mp.evaluate(() => ({
+    state: window.__game.state,
+    n: window.__game.numPlayers,
+    fire: getComputedStyle(document.getElementById('tb-fire')).display,
+    twoP: getComputedStyle(document.getElementById('tb-twoP')).display,
+  }));
+  console.log('[mobile] after 2P tap:', JSON.stringify(mstate));
+  if (mstate.state !== 'playing') failures.push(`[mobile] 2P tap did not start game (${mstate.state})`);
+  if (mstate.n !== 2) failures.push(`[mobile] expected 2 players, got ${mstate.n}`);
+  if (mstate.fire === 'none') failures.push('[mobile] fire button not shown during play');
+  if (mstate.twoP !== 'none') failures.push('[mobile] attract buttons not hidden during play');
+
+  // Drive the touch controls briefly.
+  await mp.locator('#tb-thrust').tap();
+  await mp.locator('#tb-rotR').tap();
+  await mp.locator('#tb-fire').tap();
+  await mp.waitForTimeout(300);
+
+  const mshot = fileURLToPath(new URL('./artifacts/smoke-mobile.png', import.meta.url));
+  await mp.screenshot({ path: mshot });
+  console.log(`[mobile] screenshot: ${mshot}`);
+  await mob.close();
 } finally {
   await browser.close();
   server.close();

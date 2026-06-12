@@ -25,7 +25,7 @@ audio.applySettings(settings);
 const input = new Input(window);
 input.onFirstInput = () => audio.resume();
 const game = new Game(audio, settings);
-initTouch(input);
+const touch = initTouch(input);
 
 // Exposed for the headless browser smoke test.
 window.__game = game;
@@ -59,8 +59,10 @@ window.addEventListener('blur', () => {
   if (game.state === 'playing') game.paused = true;
 });
 
+// Tap the empty field to start (or restart) — but not inside menus, where the
+// on-screen buttons drive navigation.
 canvas.addEventListener('pointerdown', () => {
-  if (game.state !== 'playing') input.tapVirtual('Enter');
+  if (game.state === 'attract' || game.state === 'gameover') input.tapVirtual('Enter');
 });
 
 function render() {
@@ -115,6 +117,7 @@ function frame(now) {
   }
   if (steps === MAX_STEPS_PER_FRAME) acc = 0;
 
+  touch.sync(game.state);
   render();
   requestAnimationFrame(frame);
 }

@@ -12,43 +12,107 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <style>
+    :root {
+      /* Touch target sizes scale with the smaller screen dimension. */
+      --btn: clamp(58px, 15vmin, 104px);
+      --btn-sm: clamp(46px, 11vmin, 78px);
+      --btn-lg: clamp(72px, 19vmin, 128px);
+      --phos: rgba(215, 247, 255, 0.9);
+      --safe-l: env(safe-area-inset-left, 0px);
+      --safe-r: env(safe-area-inset-right, 0px);
+      --safe-b: env(safe-area-inset-bottom, 0px);
+      --safe-t: env(safe-area-inset-top, 0px);
+      --pad: clamp(10px, 3.2vmin, 30px);
+    }
     html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      background: #000;
-      overflow: hidden;
-      overscroll-behavior: none;
-    }
-    #game {
-      display: block;
-      width: 100vw;
-      height: 100vh;
-      background: #000;
-      touch-action: none;
-    }
-    .touch-btn {
-      position: fixed;
-      z-index: 10;
-      border: 1px solid rgba(215, 247, 255, 0.55);
-      border-radius: 50%;
-      color: rgba(215, 247, 255, 0.85);
-      background: rgba(215, 247, 255, 0.06);
-      font-family: "Courier New", monospace;
-      font-weight: bold;
-      text-align: center;
-      user-select: none;
-      -webkit-user-select: none;
-      touch-action: none;
+      margin: 0; padding: 0; height: 100%;
+      background: #000; overflow: hidden; overscroll-behavior: none;
       -webkit-tap-highlight-color: transparent;
     }
-    .touch-btn.active {
-      background: rgba(215, 247, 255, 0.22);
+    #game {
+      display: block; width: 100vw; height: 100vh;
+      background: #000; touch-action: none;
+    }
+
+    /* ---- Touch controls (created by touch.js, shown only on touch devices) -- */
+    .touch-btn {
+      position: fixed; z-index: 10;
+      display: none;                 /* touch.js toggles visibility per state */
+      align-items: center; justify-content: center;
+      width: var(--btn); height: var(--btn);
+      border: 2px solid rgba(215, 247, 255, 0.5);
+      border-radius: 50%;
+      color: var(--phos);
+      background: rgba(215, 247, 255, 0.07);
+      font-family: "Courier New", monospace; font-weight: bold;
+      font-size: clamp(13px, 3.4vmin, 24px);
+      line-height: 1; text-align: center;
+      user-select: none; -webkit-user-select: none;
+      touch-action: none; box-sizing: border-box;
+      transition: background 0.05s, transform 0.05s;
+    }
+    .touch-btn.active { background: rgba(215, 247, 255, 0.28); transform: scale(0.94); }
+    .touch-btn.big { width: var(--btn-lg); height: var(--btn-lg); }
+    .touch-btn.small { width: var(--btn-sm); height: var(--btn-sm); font-size: clamp(11px, 2.6vmin, 18px); }
+    .touch-btn.pill {
+      width: auto; height: auto; border-radius: 999px;
+      padding: clamp(12px, 2.6vmin, 20px) clamp(20px, 5vmin, 40px);
+      font-size: clamp(15px, 3.6vmin, 26px); letter-spacing: 0.08em;
+    }
+
+    /* Gameplay layout: rotate on the left thumb, thrust/fire on the right. */
+    #tb-rotL   { left: calc(var(--safe-l) + var(--pad)); bottom: calc(var(--safe-b) + var(--pad)); }
+    #tb-rotR   { left: calc(var(--safe-l) + var(--pad) + var(--btn) + 3vmin); bottom: calc(var(--safe-b) + var(--pad)); }
+    #tb-fire   { right: calc(var(--safe-r) + var(--pad)); bottom: calc(var(--safe-b) + var(--pad)); }
+    #tb-thrust { right: calc(var(--safe-r) + var(--pad) + var(--btn-lg) + 2.5vmin); bottom: calc(var(--safe-b) + var(--pad) + 4vmin); }
+    #tb-hyp    { right: calc(var(--safe-r) + var(--pad) + 2vmin); bottom: calc(var(--safe-b) + var(--pad) + var(--btn-lg) + 3vmin); }
+    #tb-pause  { right: calc(var(--safe-r) + var(--pad)); top: calc(var(--safe-t) + var(--pad)); }
+
+    /* Menu layout: a small d-pad on the left, OK on the right, BACK top-right. */
+    #tb-up    { left: calc(var(--safe-l) + var(--pad) + var(--btn-sm) + 1.5vmin); bottom: calc(var(--safe-b) + var(--pad) + var(--btn-sm) + 1.5vmin); }
+    #tb-down  { left: calc(var(--safe-l) + var(--pad) + var(--btn-sm) + 1.5vmin); bottom: calc(var(--safe-b) + var(--pad)); }
+    #tb-left  { left: calc(var(--safe-l) + var(--pad)); bottom: calc(var(--safe-b) + var(--pad) + (var(--btn-sm) + 1.5vmin) / 2); }
+    #tb-right { left: calc(var(--safe-l) + var(--pad) + (var(--btn-sm) + 1.5vmin) * 2); bottom: calc(var(--safe-b) + var(--pad) + (var(--btn-sm) + 1.5vmin) / 2); }
+    #tb-ok    { right: calc(var(--safe-r) + var(--pad)); bottom: calc(var(--safe-b) + var(--pad)); }
+    #tb-back  { right: calc(var(--safe-r) + var(--pad)); top: calc(var(--safe-t) + var(--pad)); }
+    #tb-full  { left: calc(var(--safe-l) + var(--pad)); top: calc(var(--safe-t) + var(--pad)); }
+
+    /* Attract menu: stacked choice pills, centered. */
+    #tb-oneP, #tb-twoP, #tb-settingsBtn { left: 50%; transform: translateX(-50%); }
+    #tb-oneP        { bottom: calc(var(--safe-b) + 38vmin); }
+    #tb-twoP        { bottom: calc(var(--safe-b) + 24vmin); }
+    #tb-settingsBtn { bottom: calc(var(--safe-b) + 11vmin); }
+    #tb-oneP.active, #tb-twoP.active, #tb-settingsBtn.active { transform: translateX(-50%) scale(0.96); }
+
+    /* ---- Rotate-device hint (portrait, touch only) ------------------------- */
+    #rotate-hint {
+      position: fixed; inset: 0; z-index: 50; display: none;
+      flex-direction: column; align-items: center; justify-content: center;
+      gap: 4vmin; background: rgba(0, 0, 0, 0.92); color: var(--phos);
+      font-family: "Courier New", monospace; text-align: center; padding: 8vw;
+    }
+    #rotate-hint .rh-icon { font-size: 22vmin; line-height: 1; animation: rh-rock 1.6s ease-in-out infinite; }
+    #rotate-hint .rh-text { font-size: clamp(18px, 5vmin, 34px); letter-spacing: 0.12em; }
+    #rotate-hint .rh-sub  { font-size: clamp(12px, 3vmin, 18px); opacity: 0.7; }
+    #rh-dismiss {
+      margin-top: 3vmin; padding: 14px 28px; border: 2px solid rgba(215,247,255,0.5);
+      border-radius: 999px; background: transparent; color: var(--phos);
+      font-family: "Courier New", monospace; font-weight: bold; font-size: clamp(14px, 3.4vmin, 22px);
+    }
+    @keyframes rh-rock { 0%,100% { transform: rotate(-18deg); } 50% { transform: rotate(72deg); } }
+    @media (orientation: portrait) {
+      body.touch:not(.rh-dismissed) #rotate-hint { display: flex; }
     }
   </style>
 </head>
 <body>
   <canvas id="game"></canvas>
+  <div id="rotate-hint" aria-hidden="true">
+    <div class="rh-icon">⟳</div>
+    <div class="rh-text">ROTATE YOUR DEVICE</div>
+    <div class="rh-sub">Asteroids plays best in landscape</div>
+    <button id="rh-dismiss" type="button">PLAY ANYWAY</button>
+  </div>
   <script type="module" src="./src/main.js"></script>
 </body>
 </html>
