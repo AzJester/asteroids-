@@ -32,8 +32,16 @@ Any static server works (`npx serve`, `php -S localhost:8000`, etc.).
 | Pause             | P                        | —                         |
 | Mute              | M                        | —                         |
 
-Gameplay keys are remappable in **Settings**. On touch devices, on-screen
-buttons appear automatically and tapping the field starts a game.
+Gameplay keys are remappable in **Settings**.
+
+### On mobile / touch
+
+Touch devices get context-aware on-screen controls — rotate on the left thumb,
+thrust/fire/hyperspace on the right during play, and a d-pad + OK/BACK in menus.
+The title screen shows **1 PLAYER / 2 PLAYERS / SETTINGS** buttons, there's a
+fullscreen toggle (⛶), buttons give haptic feedback, and the layout respects
+notch safe-areas. Asteroids is a landscape game, so in portrait you'll see a
+"rotate your device" hint (with a *play anyway* option).
 
 ### Two-player
 

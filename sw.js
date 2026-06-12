@@ -1,6 +1,6 @@
 // Service worker: precache the static app shell for offline play. Bump CACHE
 // when any shell file changes so clients pick up the new version.
-const CACHE = 'asteroids-v2';
+const CACHE = 'asteroids-v3';
 
 const SHELL = [
   './',
