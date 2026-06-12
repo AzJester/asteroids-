@@ -3,14 +3,16 @@
 // bass heartbeat that accelerates as a wave thins out.
 
 import {
-  HEARTBEAT_SLOW_TICKS, HEARTBEAT_FAST_TICKS,
+  HEARTBEAT_SLOW_TICKS, HEARTBEAT_FAST_TICKS, WIDTH,
 } from './constants.js';
 
 export class Audio {
   constructor() {
     this.ctx = null;
     this.master = null;
-    this.enabled = true;
+    this.enabled = true;     // false only if Web Audio is unavailable
+    this.volume = 0.6;       // 0..1 from settings
+    this.muted = false;
     this.thrustGain = null;
     this.saucerNodes = null;
     this.beatTimer = 0;
@@ -25,21 +27,53 @@ export class Audio {
       if (!AC) { this.enabled = false; return; }
       this.ctx = new AC();
       this.master = this.ctx.createGain();
-      this.master.gain.value = 0.35;
+      this.master.gain.value = this._targetGain();
       this.master.connect(this.ctx.destination);
     }
     if (this.ctx.state === 'suspended') this.ctx.resume();
   }
 
+  _targetGain() {
+    return this.muted ? 0 : this.volume * 0.5;
+  }
+
+  applyGain() {
+    if (this.master) this.master.gain.value = this._targetGain();
+  }
+
+  applySettings(settings) {
+    this.volume = settings.volume;
+    this.muted = settings.muted;
+    this.applyGain();
+  }
+
+  setVolume(v) {
+    this.volume = Math.max(0, Math.min(1, v));
+    this.applyGain();
+  }
+
+  setMuted(b) {
+    this.muted = b;
+    this.applyGain();
+  }
+
   toggleMute() {
-    if (!this.master) return this.enabled;
-    this.enabled = !this.enabled;
-    this.master.gain.value = this.enabled ? 0.35 : 0;
-    return this.enabled;
+    this.muted = !this.muted;
+    this.applyGain();
+    return !this.muted;
+  }
+
+  /** Output node for a sound at world-x: a stereo panner feeding the master. */
+  _panNode(x) {
+    if (x == null || typeof this.ctx.createStereoPanner !== 'function') return this.master;
+    const p = this.ctx.createStereoPanner();
+    p.pan.value = Math.max(-1, Math.min(1, (x / WIDTH) * 2 - 1));
+    p.connect(this.master);
+    return p;
   }
 
   // ---- One-shot effects ----------------------------------------------------
-  _tone(type, freq, dur, gain = 0.3, freqEnd = freq) {
+  _tone(type, freq, dur, gain = 0.3, freqEnd = freq, dest = this.master) {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
@@ -49,12 +83,12 @@ export class Audio {
     osc.frequency.exponentialRampToValueAtTime(Math.max(1, freqEnd), t + dur);
     g.gain.setValueAtTime(gain, t);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    osc.connect(g).connect(this.master);
+    osc.connect(g).connect(dest);
     osc.start(t);
     osc.stop(t + dur);
   }
 
-  _noiseBurst(dur, gain, filterFreq) {
+  _noiseBurst(dur, gain, filterFreq, dest = this.master) {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
     const frames = Math.floor(this.ctx.sampleRate * dur);
@@ -69,23 +103,24 @@ export class Audio {
     const g = this.ctx.createGain();
     g.gain.setValueAtTime(gain, t);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    src.connect(lp).connect(g).connect(this.master);
+    src.connect(lp).connect(g).connect(dest);
     src.start(t);
     src.stop(t + dur);
   }
 
   fire() { this._tone('square', 880, 0.12, 0.18, 220); }
-  saucerFire() { this._tone('sawtooth', 520, 0.16, 0.16, 160); }
+  saucerFire(x) { this._tone('sawtooth', 520, 0.16, 0.16, 160, this._panNode(x)); }
 
-  explosion(size) {
+  explosion(size, x) {
     const map = { large: [0.55, 900], medium: [0.4, 1400], small: [0.28, 2200] };
     const [dur, freq] = map[size] || map.small;
-    this._noiseBurst(dur, 0.5, freq);
+    this._noiseBurst(dur, 0.5, freq, this._panNode(x));
   }
 
-  shipExplode() {
-    this._noiseBurst(0.8, 0.6, 700);
-    this._tone('triangle', 160, 0.8, 0.3, 40);
+  shipExplode(x) {
+    const dest = this._panNode(x);
+    this._noiseBurst(0.8, 0.6, 700, dest);
+    this._tone('triangle', 160, 0.8, 0.3, 40, dest);
   }
 
   extraLife() {
@@ -120,7 +155,7 @@ export class Audio {
     }
   }
 
-  saucerSound(kind) {
+  saucerSound(kind, x) {
     if (!this.ctx) return;
     this.stopSaucer();
     const osc = this.ctx.createOscillator();
@@ -132,11 +167,24 @@ export class Audio {
     lfoGain.gain.value = kind === 'small' ? 60 : 35;
     const g = this.ctx.createGain();
     g.gain.value = 0.09;
+    const panner = typeof this.ctx.createStereoPanner === 'function'
+      ? this.ctx.createStereoPanner() : null;
     lfo.connect(lfoGain).connect(osc.frequency);
-    osc.connect(g).connect(this.master);
+    if (panner) {
+      panner.pan.value = Math.max(-1, Math.min(1, ((x ?? WIDTH / 2) / WIDTH) * 2 - 1));
+      osc.connect(g).connect(panner).connect(this.master);
+    } else {
+      osc.connect(g).connect(this.master);
+    }
     osc.start();
     lfo.start();
-    this.saucerNodes = { osc, lfo, g };
+    this.saucerNodes = { osc, lfo, g, panner };
+  }
+
+  /** Pan the looping saucer drone to follow it across the screen. */
+  updateSaucerPan(x) {
+    const p = this.saucerNodes && this.saucerNodes.panner;
+    if (p) p.pan.value = Math.max(-1, Math.min(1, (x / WIDTH) * 2 - 1));
   }
 
   stopSaucer() {
