@@ -5,7 +5,9 @@ built with **HTML5 Canvas 2D + vanilla JavaScript (ES modules)**. All sound is
 synthesized live with the Web Audio API — no images, no audio files, no build
 step.
 
-## Play
+**Play it now: https://azjester.github.io/asteroids-/**
+
+## Run locally
 
 Browsers block ES modules loaded over `file://`, so serve the folder over HTTP:
 
@@ -18,15 +20,27 @@ Any static server works (`npx serve`, `php -S localhost:8000`, etc.).
 
 ### Controls
 
-| Action            | Keys                     |
-| ----------------- | ------------------------ |
-| Rotate left/right | ← / →  (or A / D)         |
-| Thrust            | ↑  (or W)                 |
-| Fire              | Space                    |
-| Hyperspace        | Shift  (or H)             |
-| Start / Restart   | Enter                    |
-| Pause             | P                        |
-| Mute              | M                        |
+| Action            | Keyboard                 | Gamepad (standard)        |
+| ----------------- | ------------------------ | ------------------------- |
+| Rotate left/right | ← / →  (or A / D)         | D-pad / left stick        |
+| Thrust            | ↑  (or W)                 | B, RT, or D-pad up        |
+| Fire              | Space                    | A                         |
+| Hyperspace        | Shift  (or H)             | X                         |
+| Start / Restart   | Enter                    | Start                     |
+| Pause             | P                        | —                         |
+| Mute              | M                        | —                         |
+
+On touch devices, on-screen buttons appear automatically and tapping the field
+starts a game.
+
+### Extras beyond the cabinet
+
+- **Attract mode** — a simple AI flies the ship behind the title, like the demo
+  loop that lured quarters in 1979.
+- **Phosphor trails** — moving objects leave the brief ghosting of a vector CRT.
+- **Ship break-up death** — the hull splits into drifting, spinning line
+  segments, as in the original.
+- **Top-10 leaderboard** with arcade-style 3-initial entry, persisted locally.
 
 ## What's faithful to the original
 
@@ -71,8 +85,12 @@ test/                   node:test unit tests for the pure logic
 ## Tests
 
 ```bash
-npm test           # node --test
+npm test                 # unit tests (node --test)
+npm run test:browser     # headless Chromium smoke test (needs: npx playwright install chromium)
 ```
+
+CI runs both on every pull request and push to `main`; pushes to `main` also
+deploy the game to GitHub Pages.
 
 The simulation runs on a fixed 60 Hz timestep decoupled from the render loop, so
 physics feel identical regardless of display refresh rate.

@@ -2,7 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { circleHit, splitResult } from '../src/util/collision.js';
-import { waveAsteroidCount, ASTEROID, MAX_ROCKS } from '../src/constants.js';
+import {
+  waveAsteroidCount, smallSaucerAimError, ASTEROID, SAUCER, MAX_ROCKS,
+} from '../src/constants.js';
 import { Asteroid } from '../src/entities/asteroid.js';
 
 test('circleHit detects overlap by radius sum', () => {
@@ -42,4 +44,11 @@ test('splitting a large rock yields two medium rocks', () => {
 test('splitting a small rock yields nothing', () => {
   const a = Asteroid.spawn('small', { x: 100, y: 100 });
   assert.equal(a.split().length, 0);
+});
+
+test('small saucer aim tightens as score climbs, with a floor', () => {
+  assert.equal(smallSaucerAimError(0), SAUCER.small.aimError);
+  assert.ok(smallSaucerAimError(20000) < smallSaucerAimError(0));
+  assert.equal(smallSaucerAimError(40000), 0.03);
+  assert.equal(smallSaucerAimError(999999), 0.03); // never below the floor
 });

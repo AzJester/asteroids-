@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Asteroids (1979)</title>
   <style>
     html, body {
@@ -11,13 +11,32 @@
       height: 100%;
       background: #000;
       overflow: hidden;
+      overscroll-behavior: none;
     }
     #game {
       display: block;
       width: 100vw;
       height: 100vh;
       background: #000;
-      cursor: none;
+      touch-action: none;
+    }
+    .touch-btn {
+      position: fixed;
+      z-index: 10;
+      border: 1px solid rgba(215, 247, 255, 0.55);
+      border-radius: 50%;
+      color: rgba(215, 247, 255, 0.85);
+      background: rgba(215, 247, 255, 0.06);
+      font-family: "Courier New", monospace;
+      font-weight: bold;
+      text-align: center;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .touch-btn.active {
+      background: rgba(215, 247, 255, 0.22);
     }
   </style>
 </head>
